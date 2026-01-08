@@ -14,13 +14,15 @@ const CITIES = [
 ];
 
 const AddShipmentScreen = () => {
-  const [pickup, setPickup] = useState(null);
-  const [dropoff, setDropoff] = useState(null);
+  // FIX 1: Added explicit types to useState
+  const [pickup, setPickup] = useState<string | null>(null);
+  const [dropoff, setDropoff] = useState<string | null>(null);
   const [isPickupModalVisible, setPickupModalVisible] = useState(false);
   const [isDropoffModalVisible, setDropoffModalVisible] = useState(false);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [distanceKm, setDistanceKm] = useState(10.0);
-  const [estimatedPrice, setEstimatedPrice] = useState(null);
+  const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
   const [selectedItemType, setSelectedItemType] = useState('documents');
   const [distanceError, setDistanceError] = useState('');
   const [selectedWeightKg, setSelectedWeightKg] = useState(5);
@@ -42,7 +44,7 @@ const AddShipmentScreen = () => {
     }
     try {
       const response = await fetch(
-        `http://localhost:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
+        `http://blackbox-backend:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
       );
       const data = await response.json();
       setEstimatedPrice(data.price);
@@ -52,7 +54,12 @@ const AddShipmentScreen = () => {
     }
   };
 
-  const renderCityModal = (visible, setVisible, onSelect) => (
+  // FIX 2: Added types to function parameters (visible: boolean, etc.)
+  const renderCityModal = (
+    visible: boolean, 
+    setVisible: (visible: boolean) => void, 
+    onSelect: (city: string) => void
+  ) => (
     <Modal
       animationType="slide"
       transparent={true}
@@ -94,8 +101,8 @@ const AddShipmentScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
-      {renderCityModal(isPickupModalVisible, setPickupModalVisible, setPickup)}
-      {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, setDropoff)}
+      {renderCityModal(isPickupModalVisible, setPickupModalVisible, setPickup as (city: string) => void)}
+      {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, setDropoff as (city: string) => void)}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContentContainer}
@@ -157,7 +164,7 @@ const AddShipmentScreen = () => {
                 <TouchableOpacity
                   key={weight}
                   style={[
-                    styles.packageTypeButton, // Reusing style for consistency
+                    styles.packageTypeButton, 
                     { backgroundColor: themeColors.cardBackground, borderColor: themeColors.borderColor },
                     selectedWeightKg === weight && { backgroundColor: themeColors.tint, borderColor: themeColors.tint },
                   ]}
