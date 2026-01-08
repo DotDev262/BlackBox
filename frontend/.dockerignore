@@ -1,0 +1,14 @@
+# Git and editor files
+.git/
+.idea/
+.vscode/
+
+# Flutter build artifacts
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Local configuration
+.metadata
+pubspec.lock

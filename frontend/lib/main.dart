@@ -61,7 +61,7 @@ class _RouteFormScreenState extends State<RouteFormScreen> {
   String _apiResponse = "";
 
   // REMEMBER: Use your PC/Server's IP address (e.g., 192.168.1.X)
-  final String _serverUrl = 'http://localhost:8000/route';
+  final String _serverUrl = '/api/route';
 
   Future<void> _submitData() async {
     if (_selectedSource == null || _selectedDestination == null) {
