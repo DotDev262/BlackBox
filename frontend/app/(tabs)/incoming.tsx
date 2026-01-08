@@ -100,22 +100,6 @@ const IncomingShipmentsScreen = () => {
             </View>
           </View>
 
-          <View style={styles.mapPreview}>
-            <View style={[styles.mapImagePlaceholder, { backgroundColor: themeColors.text }]} /> 
-            <View style={styles.mapOverlay} />
-            <View style={styles.mapTextContent}>
-              <Text style={styles.etaLabel}>Estimated Arrival</Text>
-              <Text style={styles.etaTime}>
-                2 hours <Text style={styles.etaTimeSmall}>(14:30 PM)</Text>
-              </Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={[styles.trackButton, { backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}>
-            <ThemedText style={styles.trackButtonText}>Track Location</ThemedText>
-            {/* Fixed Icon Name: arrow_forward -> arrow-forward */}
-            <MaterialIcons name="arrow-forward" size={18} color={themeColors.text} />
-          </TouchableOpacity>
         </View>
 
       </ScrollView>
