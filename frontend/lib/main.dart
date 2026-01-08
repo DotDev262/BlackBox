@@ -6,17 +6,36 @@ void main() {
   runApp(const MyApp());
 }
 
+class City {
+  final String name;
+  final double lat;
+  final double lng;
+
+  const City({required this.name, required this.lat, required this.lng});
+}
+
+// --- UPDATED LIST: Top 10 Cities in India ---
+const List<City> cities = [
+  City(name: 'Mumbai, Maharashtra', lat: 19.0760, lng: 72.8777),
+  City(name: 'Delhi, Delhi', lat: 28.6139, lng: 77.2090),
+  City(name: 'Bangalore, Karnataka', lat: 12.9716, lng: 77.5946),
+  City(name: 'Hyderabad, Telangana', lat: 17.3850, lng: 78.4867),
+  City(name: 'Ahmedabad, Gujarat', lat: 23.0225, lng: 72.5714),
+  City(name: 'Chennai, Tamil Nadu', lat: 13.0827, lng: 80.2707),
+  City(name: 'Kolkata, West Bengal', lat: 22.5726, lng: 88.3639),
+  City(name: 'Surat, Gujarat', lat: 21.1702, lng: 72.8311),
+  City(name: 'Pune, Maharashtra', lat: 18.5204, lng: 73.8567),
+  City(name: 'Jaipur, Rajasthan', lat: 26.9124, lng: 75.7873),
+];
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FastAPI Connector',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      title: 'Indian Route Calculator',
+      theme: ThemeData(primarySwatch: Colors.orange, useMaterial3: true),
       home: const RouteFormScreen(),
     );
   }
@@ -30,22 +49,25 @@ class RouteFormScreen extends StatefulWidget {
 }
 
 class _RouteFormScreenState extends State<RouteFormScreen> {
-  final TextEditingController _sourceController = TextEditingController();
-  final TextEditingController _destController = TextEditingController();
-
-  // State variables for loading and response
+  City? _selectedSource;
+  City? _selectedDestination;
   bool _isLoading = false;
   String _apiResponse = "";
 
-  // REPLACE THIS WITH YOUR ACTUAL SERVER IP
-  // If testing on a real phone, use your PC/Server's LAN IP (e.g., 192.168.1.50)
-  final String _serverUrl = 'http://YOUR_SERVER_IP:8000/process-route'; 
+  // REMEMBER: Use your PC/Server's IP address (e.g., 192.168.1.X)
+  final String _serverUrl = 'http://YOUR_SERVER_IP:8000/process-route';
 
   Future<void> _submitData() async {
-    // 1. Basic Validation
-    if (_sourceController.text.isEmpty || _destController.text.isEmpty) {
+    if (_selectedSource == null || _selectedDestination == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in both fields')),
+        const SnackBar(content: Text('Please select both Source and Destination')),
+      );
+      return;
+    }
+
+    if (_selectedSource == _selectedDestination) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Source and Destination cannot be the same')),
       );
       return;
     }
@@ -56,25 +78,28 @@ class _RouteFormScreenState extends State<RouteFormScreen> {
     });
 
     try {
-      // 2. Prepare the data
-      final Map<String, String> data = {
-        "source": _sourceController.text,
-        "destination": _destController.text,
+      final Map<String, dynamic> data = {
+        "source": {
+          "name": _selectedSource!.name,
+          "lat": _selectedSource!.lat,
+          "lng": _selectedSource!.lng
+        },
+        "destination": {
+          "name": _selectedDestination!.name,
+          "lat": _selectedDestination!.lat,
+          "lng": _selectedDestination!.lng
+        }
       };
 
-      // 3. Make the Request
       final response = await http.post(
         Uri.parse(_serverUrl),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(data),
       );
 
-      // 4. Handle Response
       if (response.statusCode == 200) {
-        // Assuming FastAPI returns a JSON response
-        final responseData = jsonDecode(response.body);
         setState(() {
-          _apiResponse = "Success: ${responseData.toString()}";
+          _apiResponse = "Response: ${jsonDecode(response.body)}";
         });
       } else {
         setState(() {
@@ -93,65 +118,74 @@ class _RouteFormScreenState extends State<RouteFormScreen> {
   }
 
   @override
-  void dispose() {
-    _sourceController.dispose();
-    _destController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Source & Destination")),
+      appBar: AppBar(title: const Text("Select Route (India)")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // SOURCE INPUT
-            TextField(
-              controller: _sourceController,
+            DropdownButtonFormField<City>(
               decoration: const InputDecoration(
-                labelText: 'Source',
+                labelText: 'Source City',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.my_location),
               ),
+              value: _selectedSource,
+              items: cities.map((City city) {
+                return DropdownMenuItem<City>(
+                  value: city,
+                  child: Text(city.name),
+                );
+              }).toList(),
+              onChanged: (City? newValue) {
+                setState(() {
+                  _selectedSource = newValue;
+                });
+              },
             ),
-            const SizedBox(height: 16),
-            
-            // DESTINATION INPUT
-            TextField(
-              controller: _destController,
+            const SizedBox(height: 20),
+            DropdownButtonFormField<City>(
               decoration: const InputDecoration(
-                labelText: 'Destination',
+                labelText: 'Destination City',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.location_on),
               ),
+              value: _selectedDestination,
+              items: cities.map((City city) {
+                return DropdownMenuItem<City>(
+                  value: city,
+                  child: Text(city.name),
+                );
+              }).toList(),
+              onChanged: (City? newValue) {
+                setState(() {
+                  _selectedDestination = newValue;
+                });
+              },
             ),
-            const SizedBox(height: 24),
-
-            // SUBMIT BUTTON
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitData,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
               ),
               child: _isLoading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(color: Colors.white),
                     )
-                  : const Text("Submit Route"),
+                  : const Text("Send to FastAPI"),
             ),
-            
             const SizedBox(height: 20),
-
-            // RESPONSE DISPLAY
             if (_apiResponse.isNotEmpty)
               Container(
-                padding: const EdgeInsets.all(10),
-                color: Colors.grey[200],
+                padding: const EdgeInsets.all(12),
+                color: Colors.grey[100],
                 child: Text(_apiResponse),
               ),
           ],
