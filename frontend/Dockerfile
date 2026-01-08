@@ -1,44 +1,32 @@
-# Stage 1: Build the Flutter web app
-# Use a specific Flutter version from the ghcr.io/cirruslabs registry
-FROM ghcr.io/cirruslabs/flutter:latest as builder
+# Stage 1: Build the Expo web app
+FROM oven/bun:latest as builder
 
-# Create and switch to a new user to avoid running as root
-RUN useradd -ms /bin/bash flutter
-# Give the new user ownership of the Flutter SDK directory
-RUN chown -R flutter:flutter /sdks/flutter
-USER flutter
-WORKDIR /home/flutter/app
+WORKDIR /app
 
-# Fix for "dubious ownership" error
-RUN git config --global --add safe.directory /sdks/flutter
+# Copy package manager files
+COPY package.json bun.lockb ./
 
-# Copy pubspec files first to leverage Docker cache for dependencies
-COPY --chown=flutter:flutter pubspec.* ./
+# Install dependencies
+RUN bun install
 
-# Get dependencies
-RUN flutter pub get
+# Copy the rest of the source code
+COPY . .
 
-# Copy the rest of the application code
-COPY --chown=flutter:flutter . .
+# Build the web app
+RUN bun run export
 
-# Build the Flutter web application
-RUN flutter build web --release
-
-# Stage 2: Create the production image with Nginx on Alpine
-# Use a lightweight alpine-based nginx image for a small final image size
+# Stage 2: Serve the web app with Nginx
 FROM nginx:alpine
 
-# Copy the Nginx configuration file
+# Copy custom Nginx configuration
+# I will create this file next
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Remove the default Nginx content
-RUN rm -rf /usr/share/nginx/html/*
+# Copy built web files from the build stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy the built web app from the builder stage
-COPY --from=builder /home/flutter/app/build/web /usr/share/nginx/html
-
-# Expose port 80 for Nginx
+# Expose port 80
 EXPOSE 80
 
-# Start Nginx in the foreground
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
