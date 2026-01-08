@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
 from pydantic import BaseModel
 from math import radians, cos, sin, sqrt, atan2
 from datetime import datetime
+from courier_pricing import price_calculator
 
 # -------------------------------
 # Database setup
@@ -58,6 +59,14 @@ class Order(Base):
     sender = relationship("Sender", back_populates="orders")
     traveller = relationship("Traveller", back_populates="orders")
 
+class Complaint(Base):
+    __tablename__ = "complaints"
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    issue = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    order = relationship("Order", backref="complaints")
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -87,6 +96,13 @@ class OrderCreate(BaseModel):
     dest_lat: float
     dest_lon: float
 
+class ComplaintCreate(BaseModel):
+    order_id: int
+    issue: str
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
 # -------------------------------
 # Utilities
 # -------------------------------
@@ -96,9 +112,16 @@ def get_db():
         yield db
     finally:
         db.close()
-# -------------------------------
-# CRUD functions
-# -------------------------------
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance between two coordinates in km"""
+    R = 6371  # Earth's radius in km
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2*atan2(sqrt(a), sqrt(1-a))
+    return round(R * c, 2)
 def create_sender(db: Session, sender: SenderCreate):
     db_sender = Sender(**sender.dict())
     db.add(db_sender)
@@ -127,7 +150,10 @@ def create_order(db: Session, order: OrderCreate):
 
     distance_km = haversine_distance(order.source_lat, order.source_lon,
                                      order.dest_lat, order.dest_lon)
-    price = calculate_price(distance_km, order.weight_kg, order.item_type)
+    price_response = price_calculator(order.source_lat, order.source_lon,
+                                      order.dest_lat, order.dest_lon,
+                                      order.weight_kg, order.item_type)
+    price = price_response.price
 
     db_order = Order(
         sender_id=order.sender_id,
@@ -147,24 +173,7 @@ def create_order(db: Session, order: OrderCreate):
 def list_orders(db: Session):
     return db.query(Order).all()
 
-# utils.py
-
-class Complaint(Base):
-    __tablename__ = "complaints"
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    issue = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    order = relationship("Order", backref="complaints")
-
-# utils.py
-
-class ComplaintCreate(BaseModel):
-    order_id: int
-    issue: str
-
-# utils.py
+# Complaint CRUD
 
 def create_complaint(db: Session, complaint: ComplaintCreate):
     # Check if order exists
@@ -184,11 +193,7 @@ def create_complaint(db: Session, complaint: ComplaintCreate):
 def list_complaints(db: Session):
     return db.query(Complaint).all()
 
-# utils.py (add below your existing CRUD functions)
-
-# -------------------------------
 # Traveller accepts order
-# -------------------------------
 def accept_order(db: Session, traveller_id: int, order_id: int):
     """
     Traveller selects an order. Updates order with traveller_id and status.
@@ -210,8 +215,3 @@ def accept_order(db: Session, traveller_id: int, order_id: int):
     db.commit()
     db.refresh(order)
     return order
-
-# -------------------------------
-# Complaints table creation (ensure table exists)
-# -------------------------------
-Base.metadata.create_all(bind=engine)

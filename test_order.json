@@ -1,0 +1,11 @@
+{
+  "sender_id": 1,
+  "source_city": "Mumbai",
+  "dest_city": "Delhi",
+  "weight_kg": 5,
+  "item_type": "documents",
+  "source_lat": 19.0760,
+  "source_lon": 72.8777,
+  "dest_lat": 28.7041,
+  "dest_lon": 77.1025
+}

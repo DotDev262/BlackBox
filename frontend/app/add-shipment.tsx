@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions, Modal, FlatList, SafeAreaView, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions, Modal, FlatList, SafeAreaView, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -30,11 +30,19 @@ const CITIES = [
   { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
 ];
 
+interface Sender {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+}
+
 const AddShipmentScreen = () => {
   const [pickup, setPickup] = useState<string | null>(null);
   const [dropoff, setDropoff] = useState<string | null>(null);
   const [isPickupModalVisible, setPickupModalVisible] = useState(false);
   const [isDropoffModalVisible, setDropoffModalVisible] = useState(false);
+  const [isSenderModalVisible, setSenderModalVisible] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [distanceKm, setDistanceKm] = useState(10.0);
@@ -42,6 +50,11 @@ const AddShipmentScreen = () => {
   const [selectedItemType, setSelectedItemType] = useState('documents');
   const [distanceError, setDistanceError] = useState('');
   const [selectedWeightKg, setSelectedWeightKg] = useState(5);
+
+  const [senders, setSenders] = useState<Sender[]>([]);
+  const [selectedSender, setSelectedSender] = useState<Sender | null>(null);
+  const [loadingSenders, setLoadingSenders] = useState(true);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -57,6 +70,23 @@ const AddShipmentScreen = () => {
 
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lon: number } | null>(null);
+
+  // Fetch senders on component mount
+  useEffect(() => {
+    const fetchSenders = async () => {
+      try {
+        setLoadingSenders(true);
+        const response = await fetch(`http://${localhost}:8000/senders`);
+        const data = await response.json();
+        setSenders(data);
+      } catch (error) {
+        console.error('Error fetching senders:', error);
+      } finally {
+        setLoadingSenders(false);
+      }
+    };
+    fetchSenders();
+  }, []);
 
   const handleGetEstimate = async () => {
     setDistanceError('');
@@ -75,6 +105,103 @@ const AddShipmentScreen = () => {
       setEstimatedPrice(null);
     }
   };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedSender || !pickup || !dropoff || !pickupCoords || !dropoffCoords || estimatedPrice === null) {
+      setDistanceError('Please complete all fields and get an estimate first.');
+      return;
+    }
+    
+    setIsPlacingOrder(true);
+    try {
+      const orderPayload = {
+        sender_id: selectedSender.id,
+        source_city: pickup,
+        dest_city: dropoff,
+        weight_kg: selectedWeightKg,
+        item_type: selectedItemType,
+        source_lat: pickupCoords.lat,
+        source_lon: pickupCoords.lon,
+        dest_lat: dropoffCoords.lat,
+        dest_lon: dropoffCoords.lon,
+      };
+
+      const response = await fetch(`http://${localhost}:8000/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Order created:', data);
+        alert('Order placed successfully!');
+        // Reset form
+        setPickup(null);
+        setDropoff(null);
+        setPickupCoords(null);
+        setDropoffCoords(null);
+        setEstimatedPrice(null);
+        setSelectedSender(null);
+        setSelectedItemType('documents');
+        setSelectedWeightKg(5);
+      } else {
+        alert(`Error: ${data.detail || 'Failed to place order'}`);
+      }
+    } catch (error) {
+      console.error('Error placing order:', error);
+      alert('Error placing order. Please try again.');
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  const renderSenderModal = () => (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={isSenderModalVisible}
+      onRequestClose={() => setSenderModalVisible(false)}
+    >
+      <Pressable style={styles.modalOverlay} onPress={() => setSenderModalVisible(false)}>
+        <View style={[styles.modalContent, { backgroundColor: themeColors.cardBackground }]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Select Sender</Text>
+            <TouchableOpacity onPress={() => setSenderModalVisible(false)}>
+              <Ionicons name="close" size={24} color={themeColors.icon} />
+            </TouchableOpacity>
+          </View>
+
+          {loadingSenders ? (
+            <ActivityIndicator size="large" color="#059669" />
+          ) : (
+            <FlatList
+              data={senders}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.cityItem, { borderBottomColor: themeColors.borderColor }]}
+                  onPress={() => {
+                    setSelectedSender(item);
+                    setSenderModalVisible(false);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.senderName, { color: themeColors.text }]}>{item.name}</Text>
+                    <Text style={styles.senderEmail}>{item.email || item.phone || 'No contact'}</Text>
+                  </View>
+                  {selectedSender?.id === item.id && (
+                    <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+      </Pressable>
+    </Modal>
+  );
 
   const renderCityModal = (
     visible: boolean,
@@ -131,6 +258,7 @@ const AddShipmentScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      {renderSenderModal()}
       {renderCityModal(isPickupModalVisible, setPickupModalVisible, (city) => { setPickup(city.name); setPickupCoords({ lat: city.lat, lon: city.lon }); })}
       {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, (city) => { setDropoff(city.name); setDropoffCoords({ lat: city.lat, lon: city.lon }); })}
       <ScrollView
@@ -144,6 +272,25 @@ const AddShipmentScreen = () => {
             <Text style={[styles.screenTitle, { color: themeColors.text }]}>New Shipment</Text>
             <Text style={styles.screenSubtitle}>Fill details to get an estimate</Text>
           </View>
+
+          {/* Sender Selection Card */}
+          <TouchableOpacity
+            onPress={() => setSenderModalVisible(true)}
+            style={[styles.card, { backgroundColor: themeColors.cardBackground }]}
+          >
+            <View style={styles.locationRow}>
+              <View style={[styles.iconContainer, { backgroundColor: '#E0E7FF' }]}>
+                <Ionicons name="person" size={20} color="#4F46E5" />
+              </View>
+              <View style={styles.locationTextContainer}>
+                <Text style={styles.labelSmall}>Sender</Text>
+                <Text style={[styles.locationValue, { color: selectedSender ? themeColors.text : '#9CA3AF' }]}>
+                  {selectedSender ? selectedSender.name : 'Select Sender'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </View>
+          </TouchableOpacity>
 
           {/* Location Card with Shadow */}
           <View style={[styles.card, { backgroundColor: themeColors.cardBackground }]}>
@@ -245,23 +392,6 @@ const AddShipmentScreen = () => {
               })}
             </View>
           </View>
-
-          {/* Distance Input */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Distance (approx)</Text>
-            <View style={[styles.inputContainer, { backgroundColor: themeColors.cardBackground, borderColor: themeColors.borderColor }]}>
-              <Text style={styles.inputSuffix}>KM</Text>
-              <TextInput
-                style={[styles.textInput, { color: themeColors.text }]}
-                placeholder="0"
-                placeholderTextColor={themeColors.icon}
-                keyboardType="numeric"
-                value={distanceKm.toString()}
-                onChangeText={(text) => setDistanceKm(parseFloat(text))}
-              />
-            </View>
-            {distanceError ? <Text style={styles.errorText}>{distanceError}</Text> : null}
-          </View>
         </View>
       </ScrollView>
 
@@ -273,10 +403,27 @@ const AddShipmentScreen = () => {
             {estimatedPrice !== null ? `₹${estimatedPrice}` : '--'}
           </Text>
         </View>
-        <TouchableOpacity style={[styles.sendButton, { backgroundColor: PRIMARY_COLOR }]} onPress={handleGetEstimate}>
-          <Text style={styles.sendButtonText}>Get Price</Text>
-          <Ionicons name="arrow-forward" size={20} color="#FFF" />
-        </TouchableOpacity>
+        {estimatedPrice === null ? (
+          <TouchableOpacity style={[styles.sendButton, { backgroundColor: PRIMARY_COLOR }]} onPress={handleGetEstimate}>
+            <Text style={styles.sendButtonText}>Get Price</Text>
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.sendButton, { backgroundColor: PRIMARY_COLOR, opacity: isPlacingOrder ? 0.6 : 1 }]}
+            onPress={handlePlaceOrder}
+            disabled={isPlacingOrder}
+          >
+            {isPlacingOrder ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <>
+                <Text style={styles.sendButtonText}>Place Order</Text>
+                <Ionicons name="checkmark" size={20} color="#FFF" />
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -517,6 +664,15 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     marginTop: 8,
     fontSize: 13,
+  },
+  senderName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  senderEmail: {
+    fontSize: 13,
+    color: '#9CA3AF',
   },
 });
 
