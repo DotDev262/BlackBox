@@ -20,8 +20,8 @@ def get_route(source: str, destination: str):
     return {"message": f"Transporting from {source} to {destination}"}
 
 @app.get("/calculate-price", response_model=PriceResponse)
-def calculate_price(lat1: float, lon1: float, lat2: float, lon2: float, weight_kg: float, item_type: str):
-    return price_calculator(lat1, lon1, lat2, lon2, weight_kg, item_type)
+def calculate_price(distance_km: float, weight_kg: float, item_type: str):
+    return price_calculator(distance_km, weight_kg, item_type)
 
 @app.get("/")
 def read_root():

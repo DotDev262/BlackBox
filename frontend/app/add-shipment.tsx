@@ -20,16 +20,8 @@ const API_URL = localhost
 console.log("Current API URL:", API_URL);
 
 const CITIES = [
-  { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
-  { name: 'Delhi', lat: 28.7041, lon: 77.1025 },
-  { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
-  { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
-  { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
-  { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
-  { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
-  { name: 'Surat', lat: 21.1702, lon: 72.8311 },
-  { name: 'Pune', lat: 18.5204, lon: 73.8567 },
-  { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
+  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad',
+  'Chennai', 'Kolkata', 'Surat', 'Pune', 'Jaipur'
 ];
 
 const AddShipmentScreen = () => {
@@ -50,23 +42,21 @@ const AddShipmentScreen = () => {
   const themeColors = Colors[colorScheme ?? 'light'];
 
   const filteredCities = useMemo(
-    () => CITIES.filter(city => city.name.toLowerCase().includes(searchQuery.toLowerCase())),
+    () => CITIES.filter(city => city.toLowerCase().includes(searchQuery.toLowerCase())),
     [searchQuery]
   );
 
-  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lon: number } | null>(null);
-
   const handleGetEstimate = async () => {
     setDistanceError('');
-    if (!pickupCoords || !dropoffCoords) {
-      setDistanceError('Please select both pickup and dropoff cities.');
+    if (isNaN(distanceKm) || distanceKm <= 0) {
+      setDistanceError('Distance must be a positive number.');
       setEstimatedPrice(null);
       return;
     }
     try {
-      const url = `http://${localhost}:8000/calculate-price?lat1=${pickupCoords.lat}&lon1=${pickupCoords.lon}&lat2=${dropoffCoords.lat}&lon2=${dropoffCoords.lon}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`;
-      const response = await fetch(url);
+      const response = await fetch(
+        `http://${localhost}:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
+      );
       const data = await response.json();
       setEstimatedPrice(data.price);
     } catch (error) {
@@ -77,9 +67,9 @@ const AddShipmentScreen = () => {
 
   // FIX 2: Added types to function parameters (visible: boolean, etc.)
   const renderCityModal = (
-    visible: boolean,
-    setVisible: (visible: boolean) => void,
-    onSelect: (city: { name: string; lat: number; lon: number }) => void
+    visible: boolean, 
+    setVisible: (visible: boolean) => void, 
+    onSelect: (city: string) => void
   ) => (
     <Modal
       animationType="slide"
@@ -101,7 +91,7 @@ const AddShipmentScreen = () => {
           />
           <FlatList
             data={filteredCities}
-            keyExtractor={(item) => item.name}
+            keyExtractor={(item) => item}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={[styles.cityItem, { borderBottomColor: themeColors.borderColor }]}
@@ -111,7 +101,7 @@ const AddShipmentScreen = () => {
                   setVisible(false);
                 }}
               >
-                <ThemedText style={{ color: themeColors.text }}>{item.name}</ThemedText>
+                <ThemedText style={{ color: themeColors.text }}>{item}</ThemedText>
               </TouchableOpacity>
             )}
           />
@@ -122,8 +112,8 @@ const AddShipmentScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
-      {renderCityModal(isPickupModalVisible, setPickupModalVisible, (city) => { setPickup(city.name); setPickupCoords({ lat: city.lat, lon: city.lon }); })}
-      {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, (city) => { setDropoff(city.name); setDropoffCoords({ lat: city.lat, lon: city.lon }); })}
+      {renderCityModal(isPickupModalVisible, setPickupModalVisible, setPickup as (city: string) => void)}
+      {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, setDropoff as (city: string) => void)}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContentContainer}
