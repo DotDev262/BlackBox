@@ -56,3 +56,16 @@ def create_order(order: utils.OrderCreate, db: Session = Depends(utils.get_db)):
 @app.get("/orders")
 def list_orders(db: Session = Depends(utils.get_db)):
     return utils.list_orders(db)
+
+
+@app.post("/orders/{order_id}/accept/{traveller_id}")
+def traveller_accept_order(order_id: int, traveller_id: int, db: Session = Depends(utils.get_db)):
+    return utils.accept_order(db, traveller_id, order_id)
+
+@app.post("/complaints")
+def create_complaint_endpoint(complaint: utils.ComplaintCreate, db: Session = Depends(utils.get_db)):
+    return utils.create_complaint(db, complaint)
+
+@app.get("/complaints")
+def list_complaints_endpoint(db: Session = Depends(utils.get_db)):
+    return utils.list_complaints(db)
