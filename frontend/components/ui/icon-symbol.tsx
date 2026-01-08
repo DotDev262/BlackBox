@@ -18,6 +18,7 @@ const MAPPING = {
   'paperplane.fill': 'send',
   'archivebox.fill': 'archive',
   'car.fill': 'local-shipping',
+  'lifebuoy': 'support-agent',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
 } as IconMapping;

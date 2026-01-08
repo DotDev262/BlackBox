@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons'; // MaterialSymbolsOutlined are typically MaterialIcons in Expo
 
@@ -196,11 +196,18 @@ const styles = StyleSheet.create({
     padding: 20, // p-5
     borderRadius: 16, // rounded-2xl
     backgroundColor: '#FFFFFF', // bg-white
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, // shadow-sm
-    shadowRadius: 2,
-    elevation: 2, // Android shadow
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
+      },
+    }),
     borderWidth: 1,
     borderColor: '#F3F4F6', // border-gray-100
     overflow: 'hidden',
@@ -326,11 +333,18 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', // text-white
     fontWeight: 'bold',
     borderRadius: 12, // rounded-xl
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, // shadow-lg shadow-primary/25
-    shadowRadius: 6,
-    elevation: 5, // Android shadow
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 6px rgba(16, 185, 129, 0.25)',
+      },
+      default: {
+        shadowColor: '#10B981',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 5,
+      },
+    }),
   },
   actionButtonText: {
     color: '#FFFFFF',

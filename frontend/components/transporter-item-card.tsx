@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
@@ -35,7 +35,7 @@ const TransporterItemCard = ({ item }: TransporterItemCardProps) => {
   };
 
   return (
-    <ThemedView style={[styles.card, { backgroundColor: themeColors.cardBackground, shadowColor: '#000' }]}>
+    <ThemedView style={[styles.card, { backgroundColor: themeColors.cardBackground }]}>
       <View style={styles.cardHeader}>
         <View style={styles.headerLeft}>
           <View style={[styles.iconContainer, { backgroundColor: themeColors.borderColor }]}>
