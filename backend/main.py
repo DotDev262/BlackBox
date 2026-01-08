@@ -1,10 +1,20 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from courier_pricing import price_calculator, PriceResponse
 import utils
+from seed_db import seed_database
 from sqlalchemy.orm import Session
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: seed database
+    seed_database()
+    yield
+    # Shutdown: cleanup if needed
+    pass
+
+app = FastAPI(lifespan=lifespan)
 
 # Add CORS middleware
 app.add_middleware(
