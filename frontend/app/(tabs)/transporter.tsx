@@ -1,42 +1,75 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import TransporterItemCard, { type TransporterItem } from '@/components/transporter-item-card';
+
+const dummyItems: TransporterItem[] = [
+  {
+    id: '1',
+    classification: 'Electronics',
+    pickupStatus: 'Picked Up',
+    deliveryDeadline: 'Today, 5:00 PM',
+    dropOffCenter: 'Mumbai Central Hub',
+    icon: 'devices',
+  },
+  {
+    id: '2',
+    classification: 'Documents',
+    pickupStatus: 'To Be Picked Up',
+    deliveryDeadline: 'Tomorrow, 12:00 PM',
+    dropOffCenter: 'Delhi South Hub',
+    icon: 'folder',
+  },
+  {
+    id: '3',
+    classification: 'Fragile',
+    pickupStatus: 'Picked Up',
+    deliveryDeadline: 'Today, 8:00 PM',
+    dropOffCenter: 'Bangalore East Hub',
+    icon: 'bug-report',
+  },
+];
 
 const TransporterScreen = () => {
   const colorScheme = useColorScheme();
-
-  const backgroundColor = Colors[colorScheme ?? 'light'].background;
-  const textColor = Colors[colorScheme ?? 'light'].text;
-  const subtitleColor = Colors[colorScheme ?? 'light'].icon; // Using icon color for subtitle
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor }}>
-      <ThemedView style={styles.container}>
-        <ThemedText style={[styles.title, { color: textColor }]}>Transporter Screen</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: subtitleColor }]}>Your assigned tasks will appear here.</ThemedText>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
+      <ThemedView style={[styles.header, { borderBottomColor: themeColors.borderColor, backgroundColor: themeColors.cardBackground }]}>
+        <ThemedText style={[styles.headerTitle, { color: themeColors.text }]}>Transporter Dashboard</ThemedText>
       </ThemedView>
+      <FlatList
+        data={dummyItems}
+        renderItem={({ item }) => <TransporterItemCard item={item} />}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={<ThemedText style={[styles.listHeader, { color: themeColors.text }]}>On Board Shipments</ThemedText>}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  header: {
     padding: 20,
+    borderBottomWidth: 1,
   },
-  title: {
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 16,
+  listContainer: {
+    padding: 20,
+  },
+  listHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
 });
 

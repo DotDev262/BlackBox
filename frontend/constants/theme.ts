@@ -7,34 +7,46 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1F2937', // Closest to slate-900 from TailwindCSS
-    background: '#f6f8f7', // background-light
-    tint: '#10b77f', // primary
-    icon: '#6B7280', // Closest to slate-500
-    tabIconDefault: '#6B7280', // slate-500
-    tabIconSelected: '#10b77f', // primary
-    cardBackground: '#FFFFFF',
-    borderColor: '#E5E7EB', // gray-200
-    ratingBackground: 'rgba(253, 224, 71, 0.2)', // yellow-400/20
-    ratingText: '#D97706', // yellow-600
-    transitStatusBackground: 'rgba(59, 130, 246, 0.1)', // blue-500/10
-    transitStatusText: '#3B82F6', // blue-500
-    accentColor: '#10b77f', // primary
+    text: '#212121', // Dark Gray
+    background: '#F5F5F5', // Light Gray
+    tint: '#2196F3', // Blue
+    icon: '#757575', // Medium Gray
+    tabIconDefault: '#757575',
+    tabIconSelected: '#2196F3',
+    cardBackground: '#FFFFFF', // White
+    borderColor: '#E0E0E0', // Lighter Gray
+    // Status colors
+    accentColor: '#2196F3', // Blue
+    ratingText: '#FFA000', // Amber
+    ratingBackground: 'rgba(255, 160, 0, 0.1)',
+    transitStatusText: '#2196F3', // Blue
+    transitStatusBackground: 'rgba(33, 150, 243, 0.1)',
+    // New status colors for better harmony
+    statusWarningText: '#FFA000', // Amber
+    statusWarningBackground: 'rgba(255, 160, 0, 0.1)',
+    statusInfoText: '#757575', // Medium Gray
+    statusInfoBackground: '#F5F5F5',
   },
   dark: {
-    text: '#FFFFFF', // white
-    background: '#10221c', // background-dark
-    tint: '#10b77f', // primary
-    icon: '#9CA3AF', // Closest to slate-400
-    tabIconDefault: '#9CA3AF', // slate-400
-    tabIconSelected: '#10b77f', // primary
-    cardBackground: '#0F172A', // trust-blue
-    borderColor: 'rgba(255, 255, 255, 0.05)', // white/5
-    ratingBackground: 'rgba(253, 224, 71, 0.2)', // yellow-400/20 (assuming same in dark mode)
-    ratingText: '#FACC15', // yellow-400 (adjusted for better contrast)
-    transitStatusBackground: 'rgba(59, 130, 246, 0.1)', // blue-500/10
-    transitStatusText: '#3B82F6', // blue-500
-    accentColor: '#10b77f', // primary
+    text: '#E0E0E0', // Light Gray
+    background: '#121212', // Very Dark Gray
+    tint: '#2196F3', // Blue
+    icon: '#9E9E9E', // Medium Gray
+    tabIconDefault: '#9E9E9E',
+    tabIconSelected: '#2196F3',
+    cardBackground: '#1E1E1E', // Dark Gray
+    borderColor: '#424242', // Lighter Dark Gray
+    // Status colors
+    accentColor: '#2196F3', // Blue
+    ratingText: '#FFC107', // Amber
+    ratingBackground: 'rgba(255, 193, 7, 0.1)',
+    transitStatusText: '#64B5F6', // Light Blue
+    transitStatusBackground: 'rgba(100, 181, 246, 0.1)',
+    // New status colors for better harmony
+    statusWarningText: '#FFC107', // Amber
+    statusWarningBackground: 'rgba(255, 193, 7, 0.1)',
+    statusInfoText: '#9E9E9E', // Medium Gray
+    statusInfoBackground: '#424242',
   },
 };
 

@@ -1,11 +1,15 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions, Modal, FlatList, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Dimensions, Modal, FlatList, SafeAreaView, Pressable } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState, useMemo } from 'react';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
 const CITIES = [
-  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 
+  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad',
   'Chennai', 'Kolkata', 'Surat', 'Pune', 'Jaipur'
 ];
 
@@ -15,11 +19,14 @@ const AddShipmentScreen = () => {
   const [isPickupModalVisible, setPickupModalVisible] = useState(false);
   const [isDropoffModalVisible, setDropoffModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [distanceKm, setDistanceKm] = useState(10.0); // Default value
+  const [distanceKm, setDistanceKm] = useState(10.0);
   const [estimatedPrice, setEstimatedPrice] = useState(null);
-  const [selectedItemType, setSelectedItemType] = useState('documents'); // Default to 'documents'
+  const [selectedItemType, setSelectedItemType] = useState('documents');
   const [distanceError, setDistanceError] = useState('');
-  const [selectedWeightKg, setSelectedWeightKg] = useState(5); // Default to 5 kg
+  const [selectedWeightKg, setSelectedWeightKg] = useState(5);
+
+  const colorScheme = useColorScheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   const filteredCities = useMemo(
     () => CITIES.filter(city => city.toLowerCase().includes(searchQuery.toLowerCase())),
@@ -27,14 +34,12 @@ const AddShipmentScreen = () => {
   );
 
   const handleGetEstimate = async () => {
-    setDistanceError(''); // Clear previous errors
-
+    setDistanceError('');
     if (isNaN(distanceKm) || distanceKm <= 0) {
       setDistanceError('Distance must be a positive number.');
       setEstimatedPrice(null);
       return;
     }
-
     try {
       const response = await fetch(
         `http://localhost:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
@@ -54,14 +59,15 @@ const AddShipmentScreen = () => {
       visible={visible}
       onRequestClose={() => setVisible(false)}
     >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+      <Pressable style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={() => setVisible(false)}>
+        <ThemedView style={[styles.modalContent, { backgroundColor: themeColors.cardBackground }]} onStartShouldSetResponder={() => true} onResponderRelease={(e) => e.stopPropagation()}>
           <TouchableOpacity style={styles.closeButton} onPress={() => { setSearchQuery(''); setVisible(false); }}>
-            <Ionicons name="close-circle" size={32} color="#9CA3AF" />
+            <Ionicons name="close-circle" size={32} color={themeColors.icon} />
           </TouchableOpacity>
           <TextInput
             placeholder="Search for a city..."
-            style={styles.searchInput}
+            style={[styles.searchInput, { borderColor: themeColors.borderColor, color: themeColors.text }]}
+            placeholderTextColor={themeColors.icon}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -70,157 +76,139 @@ const AddShipmentScreen = () => {
             keyExtractor={(item) => item}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.cityItem}
+                style={[styles.cityItem, { borderBottomColor: themeColors.borderColor }]}
                 onPress={() => {
                   onSelect(item);
                   setSearchQuery('');
                   setVisible(false);
                 }}
               >
-                <Text style={styles.cityText}>{item}</Text>
+                <ThemedText style={{ color: themeColors.text }}>{item}</ThemedText>
               </TouchableOpacity>
             )}
           />
-        </View>
-      </SafeAreaView>
+        </ThemedView>
+      </Pressable>
     </Modal>
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       {renderCityModal(isPickupModalVisible, setPickupModalVisible, setPickup)}
       {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, setDropoff)}
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Rapido Parcel</Text>
-        <Ionicons name="person-circle-outline" size={32} color="#4B5563" />
-      </View>
-      
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <View style={styles.locationContainer}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <ThemedView style={styles.content}>
+          <ThemedView style={[styles.locationContainer, { backgroundColor: themeColors.cardBackground }]}>
             <TouchableOpacity onPress={() => setPickupModalVisible(true)} style={styles.locationInputWrapper}>
-              <Ionicons name="arrow-up-circle" size={24} color="#F59E0B" style={styles.locationIcon} />
-              <Text style={styles.locationInput}>{pickup || 'Pick up location'}</Text>
+              <Ionicons name="arrow-up-circle" size={24} color={themeColors.tint} />
+              <ThemedText style={[styles.locationInput, { color: themeColors.text }]}>{pickup || 'Pick up location'}</ThemedText>
             </TouchableOpacity>
-            <View style={styles.dashedLine} />
+            <ThemedView style={[styles.dashedLine, { borderLeftColor: themeColors.borderColor }]} />
             <TouchableOpacity onPress={() => setDropoffModalVisible(true)} style={styles.locationInputWrapper}>
-              <Ionicons name="arrow-down-circle" size={24} color="#10B981" style={styles.locationIcon} />
-              <Text style={styles.locationInput}>{dropoff || 'Drop off location'}</Text>
+              <Ionicons name="arrow-down-circle" size={24} color={themeColors.tint} />
+              <ThemedText style={[styles.locationInput, { color: themeColors.text }]}>{dropoff || 'Drop off location'}</ThemedText>
             </TouchableOpacity>
-          </View>
+          </ThemedView>
 
-          <View style={styles.mapPlaceholder}>
-            <Text style={styles.mapText}>Map View Placeholder</Text>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Package Type</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.packageTypeScrollView}>
-              <TouchableOpacity
-                style={[styles.packageTypeButton, selectedItemType === 'documents' && styles.packageTypeButtonActive]}
-                onPress={() => setSelectedItemType('documents')}
-              >
-                <MaterialCommunityIcons name="file-document-outline" size={24} color={selectedItemType === 'documents' ? '#FFFFFF' : '#4B5563'} />
-                <Text style={[styles.packageTypeText, selectedItemType === 'documents' && styles.packageTypeTextActive]}>Documents</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.packageTypeButton, selectedItemType === 'food' && styles.packageTypeButtonActive]}
-                onPress={() => setSelectedItemType('food')}
-              >
-                <MaterialCommunityIcons name="food" size={24} color={selectedItemType === 'food' ? '#FFFFFF' : '#4B5563'} />
-                <Text style={[styles.packageTypeText, selectedItemType === 'food' && styles.packageTypeTextActive]}>Food</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.packageTypeButton, selectedItemType === 'clothes' && styles.packageTypeButtonActive]}
-                onPress={() => setSelectedItemType('clothes')}
-              >
-                <MaterialCommunityIcons name="hanger" size={24} color={selectedItemType === 'clothes' ? '#FFFFFF' : '#4B5563'} />
-                <Text style={[styles.packageTypeText, selectedItemType === 'clothes' && styles.packageTypeTextActive]}>Clothes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.packageTypeButton, selectedItemType === 'other' && styles.packageTypeButtonActive]}
-                onPress={() => setSelectedItemType('other')}
-              >
-                <MaterialCommunityIcons name="dots-horizontal" size={24} color={selectedItemType === 'other' ? '#FFFFFF' : '#4B5563'} />
-                <Text style={[styles.packageTypeText, selectedItemType === 'other' && styles.packageTypeTextActive]}>Other</Text>
-              </TouchableOpacity>
+          <ThemedView style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: themeColors.text }]}>Package Type</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {['documents', 'food', 'clothes', 'other'].map(type => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.packageTypeButton,
+                    { backgroundColor: themeColors.cardBackground, borderColor: themeColors.borderColor },
+                    selectedItemType === type && { backgroundColor: themeColors.tint, borderColor: themeColors.tint }
+                  ]}
+                  onPress={() => setSelectedItemType(type)}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      type === 'documents'
+                        ? 'file-document-outline'
+                        : type === 'food'
+                        ? 'food'
+                        : type === 'clothes'
+                        ? 'hanger'
+                        : 'dots-horizontal'
+                    }
+                    size={24}
+                    color={selectedItemType === type ? '#FFFFFF' : themeColors.icon}
+                  />
+                  <ThemedText style={[
+                    styles.packageTypeText,
+                    { color: themeColors.icon },
+                    selectedItemType === type && { color: '#FFFFFF' }
+                  ]}>{type.charAt(0).toUpperCase() + type.slice(1)}</ThemedText>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
-          </View>
+          </ThemedView>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Package Weight</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.packageTypeScrollView}>
+          <ThemedView style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: themeColors.text }]}>Package Weight</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {[1, 5, 10, 20].map((weight) => (
                 <TouchableOpacity
                   key={weight}
                   style={[
-                    styles.weightButton,
-                    selectedWeightKg === weight && styles.weightButtonActive,
+                    styles.packageTypeButton, // Reusing style for consistency
+                    { backgroundColor: themeColors.cardBackground, borderColor: themeColors.borderColor },
+                    selectedWeightKg === weight && { backgroundColor: themeColors.tint, borderColor: themeColors.tint },
                   ]}
                   onPress={() => setSelectedWeightKg(weight)}
                 >
-                  <Text
-                    style={[
-                      styles.weightButtonText,
-                      selectedWeightKg === weight && styles.weightButtonTextActive,
-                    ]}
-                  >
+                  <ThemedText style={[
+                    styles.packageTypeText,
+                    { color: themeColors.icon },
+                    selectedWeightKg === weight && { color: '#FFFFFF' }
+                  ]}>
                     Up to {weight} kg
-                  </Text>
+                  </ThemedText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Distance (km)</Text>
+          </ThemedView>
+
+          <ThemedView style={styles.section}>
+            <ThemedText style={[styles.sectionTitle, { color: themeColors.text }]}>Distance (km)</ThemedText>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { borderColor: themeColors.borderColor, color: themeColors.text, backgroundColor: themeColors.cardBackground }]}
               placeholder="Enter distance in km"
+              placeholderTextColor={themeColors.icon}
               keyboardType="numeric"
               value={distanceKm.toString()}
               onChangeText={(text) => setDistanceKm(parseFloat(text))}
             />
-            {distanceError ? <Text style={styles.errorText}>{distanceError}</Text> : null}
-          </View>
-        </View>
+            {distanceError ? <ThemedText style={styles.errorText}>{distanceError}</ThemedText> : null}
+          </ThemedView>
+        </ThemedView>
       </ScrollView>
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.sendButton} onPress={handleGetEstimate}>
+      <ThemedView style={[styles.bottomBar, { backgroundColor: themeColors.cardBackground, borderTopColor: themeColors.borderColor }]}>
+        <TouchableOpacity style={[styles.sendButton, { backgroundColor: themeColors.tint }]} onPress={handleGetEstimate}>
           <Text style={styles.sendButtonText}>Get Estimate</Text>
         </TouchableOpacity>
         {estimatedPrice !== null && (
-          <Text style={styles.estimatedPriceText}>Estimated Price: ₹{estimatedPrice}</Text>
+          <ThemedText style={[styles.estimatedPriceText, { color: themeColors.text }]}>Estimated Price: ₹{estimatedPrice}</ThemedText>
         )}
-      </View>
-    </View>
+      </ThemedView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
+  scrollContentContainer: {
+    paddingBottom: 20,
   },
   content: {
     padding: 20,
   },
   locationContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -230,114 +218,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 40,
   },
-  locationIcon: {
-    marginRight: 15,
-  },
   locationInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1F2937',
   },
   dashedLine: {
     height: 30,
     width: 1,
     borderLeftWidth: 1,
-    borderLeftColor: '#D1D5DB',
     borderStyle: 'dashed',
     marginLeft: 12,
     marginVertical: 5,
   },
-  mapPlaceholder: {
-    height: 200,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  mapText: {
-    color: '#9CA3AF',
-    fontSize: 16,
-  },
   section: {
     marginBottom: 20,
+    backgroundColor: 'transparent',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 10,
-  },
-  packageTypeScrollView: {
-    flexDirection: 'row',
+    marginBottom: 15,
   },
   packageTypeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  packageTypeButtonActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
   },
   packageTypeText: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#4B5563',
+    fontWeight: '500',
   },
-  packageTypeTextActive: {
-    color: '#FFFFFF',
-  },
-  weightSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 15,
-    borderRadius: 12,
-  },
-  weightText: {
-    fontSize: 16,
-    color: '#1F2937',
-  },
-  weightButton: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginRight: 10,
+  textInput: {
+    height: 50,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  weightButtonActive: {
-    backgroundColor: '#10B981',
-    borderColor: '#10B981',
-  },
-  weightButtonText: {
-    fontSize: 14,
-    color: '#4B5563',
-  },
-  weightButtonTextActive: {
-    color: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
   },
   bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     padding: 20,
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
   },
   sendButton: {
-    backgroundColor: '#EF4444',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
@@ -348,59 +275,45 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   estimatedPriceText: {
-    marginTop: 10,
+    marginTop: 15,
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#1F2937',
   },
   errorText: {
     color: 'red',
     textAlign: 'center',
-    marginTop: 5,
+    marginTop: 10,
     fontSize: 14,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     height: '50%',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   closeButton: {
     alignSelf: 'flex-end',
     marginBottom: 10,
   },
   searchInput: {
-    height: 40,
-    borderColor: '#D1D5DB',
+    height: 50,
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
   },
   cityItem: {
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  cityText: {
-    fontSize: 18,
-  },
-  textInput: {
-    height: 40,
-    borderColor: '#D1D5DB',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    backgroundColor: '#FFFFFF',
-    fontSize: 16,
-    color: '#1F2937',
   },
 });
 
