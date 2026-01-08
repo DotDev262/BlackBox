@@ -5,8 +5,19 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
+import Constants from "expo-constants";
 
 const { width } = Dimensions.get('window');
+
+// Get the IP address of the machine running 'npx expo start'
+const debuggerHost = Constants.expoConfig?.hostUri;
+const localhost = debuggerHost?.split(":")[0];
+
+const API_URL = localhost 
+  ? `http://${localhost}:8000` 
+  : "https://api.your-production-url.com";
+
+console.log("Current API URL:", API_URL);
 
 const CITIES = [
   'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad',
@@ -44,7 +55,7 @@ const AddShipmentScreen = () => {
     }
     try {
       const response = await fetch(
-        `http://blackbox-backend:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
+        `http://${localhost}:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
       );
       const data = await response.json();
       setEstimatedPrice(data.price);
