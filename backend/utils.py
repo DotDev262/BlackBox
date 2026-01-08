@@ -182,3 +182,72 @@ def create_order(db: Session, order: OrderCreate):
 
 def list_orders(db: Session):
     return db.query(Order).all()
+
+# utils.py
+
+class Complaint(Base):
+    __tablename__ = "complaints"
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    issue = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    order = relationship("Order", backref="complaints")
+
+# utils.py
+
+class ComplaintCreate(BaseModel):
+    order_id: int
+    issue: str
+
+# utils.py
+
+def create_complaint(db: Session, complaint: ComplaintCreate):
+    # Check if order exists
+    order = db.query(Order).filter(Order.id == complaint.order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    db_complaint = Complaint(
+        order_id=complaint.order_id,
+        issue=complaint.issue
+    )
+    db.add(db_complaint)
+    db.commit()
+    db.refresh(db_complaint)
+    return db_complaint
+
+def list_complaints(db: Session):
+    return db.query(Complaint).all()
+
+# utils.py (add below your existing CRUD functions)
+
+# -------------------------------
+# Traveller accepts order
+# -------------------------------
+def accept_order(db: Session, traveller_id: int, order_id: int):
+    """
+    Traveller selects an order. Updates order with traveller_id and status.
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order.traveller_id:
+        raise HTTPException(status_code=400, detail="Order already accepted by another traveller")
+    
+    traveller = db.query(Traveller).filter(Traveller.id == traveller_id).first()
+    if not traveller:
+        raise HTTPException(status_code=404, detail="Traveller not found")
+    
+    # Assign traveller and update status
+    order.traveller_id = traveller_id
+    order.status = "accepted"
+    db.commit()
+    db.refresh(order)
+    return order
+
+# -------------------------------
+# Complaints table creation (ensure table exists)
+# -------------------------------
+Base.metadata.create_all(bind=engine)
