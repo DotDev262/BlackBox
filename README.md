@@ -100,6 +100,9 @@ Use this method if you are actively writing code and need **Hot Reloading**.
 -   **API URL:** The frontend automatically attempts to detect the host IP address using `expo-constants` to communicate with the backend.
 -   **Docker Networking:** In Docker Compose, the services communicate via internal networking, but ports `3000` and `8000` are exposed to your host machine for access.
 
+## DEMO Vimeo Link
+https://vimeo.com/1152638130?fl=ip&fe=ec
+
 ## Project Structure
 
 -   `frontend/`: Expo/React Native application.

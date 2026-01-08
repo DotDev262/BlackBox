@@ -62,10 +62,6 @@ const ShipmentCard = ({ shipment }: ShipmentCardProps) => {
           <ThemedText style={[styles.infoText, { color: themeColors.text }]}>{shipment.estimatedTime}</ThemedText>
         </View>
       </View>
-
-      <TouchableOpacity style={[styles.trackButton, { borderTopColor: themeColors.borderColor }]}>
-        <ThemedText style={[styles.trackButtonText, { color: themeColors.tint }]}>Track Shipment</ThemedText>
-      </TouchableOpacity>
     </ThemedView>
   );
 };
@@ -128,15 +124,6 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  trackButton: {
-    paddingTop: 10,
-    borderTopWidth: 1,
-  },
-  trackButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
   },
 });
 
