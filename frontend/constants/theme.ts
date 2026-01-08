@@ -5,25 +5,36 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#1F2937', // Closest to slate-900 from TailwindCSS
+    background: '#f6f8f7', // background-light
+    tint: '#10b77f', // primary
+    icon: '#6B7280', // Closest to slate-500
+    tabIconDefault: '#6B7280', // slate-500
+    tabIconSelected: '#10b77f', // primary
+    cardBackground: '#FFFFFF',
+    borderColor: '#E5E7EB', // gray-200
+    ratingBackground: 'rgba(253, 224, 71, 0.2)', // yellow-400/20
+    ratingText: '#D97706', // yellow-600
+    transitStatusBackground: 'rgba(59, 130, 246, 0.1)', // blue-500/10
+    transitStatusText: '#3B82F6', // blue-500
+    accentColor: '#10b77f', // primary
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#FFFFFF', // white
+    background: '#10221c', // background-dark
+    tint: '#10b77f', // primary
+    icon: '#9CA3AF', // Closest to slate-400
+    tabIconDefault: '#9CA3AF', // slate-400
+    tabIconSelected: '#10b77f', // primary
+    cardBackground: '#0F172A', // trust-blue
+    borderColor: 'rgba(255, 255, 255, 0.05)', // white/5
+    ratingBackground: 'rgba(253, 224, 71, 0.2)', // yellow-400/20 (assuming same in dark mode)
+    ratingText: '#FACC15', // yellow-400 (adjusted for better contrast)
+    transitStatusBackground: 'rgba(59, 130, 246, 0.1)', // blue-500/10
+    transitStatusText: '#3B82F6', // blue-500
+    accentColor: '#10b77f', // primary
   },
 };
 

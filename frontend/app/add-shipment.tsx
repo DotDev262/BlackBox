@@ -9,18 +9,43 @@ const CITIES = [
   'Chennai', 'Kolkata', 'Surat', 'Pune', 'Jaipur'
 ];
 
-const RapidoParcelHomeScreen = () => {
+const AddShipmentScreen = () => {
   const [pickup, setPickup] = useState(null);
   const [dropoff, setDropoff] = useState(null);
   const [isPickupModalVisible, setPickupModalVisible] = useState(false);
   const [isDropoffModalVisible, setDropoffModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [distanceKm, setDistanceKm] = useState(10.0); // Default value
+  const [estimatedPrice, setEstimatedPrice] = useState(null);
+  const [selectedItemType, setSelectedItemType] = useState('documents'); // Default to 'documents'
+  const [distanceError, setDistanceError] = useState('');
+  const [selectedWeightKg, setSelectedWeightKg] = useState(5); // Default to 5 kg
 
-  const filteredCities = useMemo(() => 
-    CITIES.filter(city => 
-      city.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [searchQuery]
+  const filteredCities = useMemo(
+    () => CITIES.filter(city => city.toLowerCase().includes(searchQuery.toLowerCase())),
+    [searchQuery]
   );
+
+  const handleGetEstimate = async () => {
+    setDistanceError(''); // Clear previous errors
+
+    if (isNaN(distanceKm) || distanceKm <= 0) {
+      setDistanceError('Distance must be a positive number.');
+      setEstimatedPrice(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/calculate-price?distance_km=${distanceKm}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`
+      );
+      const data = await response.json();
+      setEstimatedPrice(data.price);
+    } catch (error) {
+      console.error('Error fetching price estimate:', error);
+      setEstimatedPrice(null);
+    }
+  };
 
   const renderCityModal = (visible, setVisible, onSelect) => (
     <Modal
@@ -92,39 +117,81 @@ const RapidoParcelHomeScreen = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Package Type</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.packageTypeScrollView}>
-              <TouchableOpacity style={[styles.packageTypeButton, styles.packageTypeButtonActive]}>
-                <MaterialCommunityIcons name="file-document-outline" size={24} color="#FFFFFF" />
-                <Text style={[styles.packageTypeText, styles.packageTypeTextActive]}>Documents</Text>
+              <TouchableOpacity
+                style={[styles.packageTypeButton, selectedItemType === 'documents' && styles.packageTypeButtonActive]}
+                onPress={() => setSelectedItemType('documents')}
+              >
+                <MaterialCommunityIcons name="file-document-outline" size={24} color={selectedItemType === 'documents' ? '#FFFFFF' : '#4B5563'} />
+                <Text style={[styles.packageTypeText, selectedItemType === 'documents' && styles.packageTypeTextActive]}>Documents</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.packageTypeButton}>
-                <MaterialCommunityIcons name="food" size={24} color="#4B5563" />
-                <Text style={styles.packageTypeText}>Food</Text>
+              <TouchableOpacity
+                style={[styles.packageTypeButton, selectedItemType === 'food' && styles.packageTypeButtonActive]}
+                onPress={() => setSelectedItemType('food')}
+              >
+                <MaterialCommunityIcons name="food" size={24} color={selectedItemType === 'food' ? '#FFFFFF' : '#4B5563'} />
+                <Text style={[styles.packageTypeText, selectedItemType === 'food' && styles.packageTypeTextActive]}>Food</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.packageTypeButton}>
-                <MaterialCommunityIcons name="hanger" size={24} color="#4B5563" />
-                <Text style={styles.packageTypeText}>Clothes</Text>
+              <TouchableOpacity
+                style={[styles.packageTypeButton, selectedItemType === 'clothes' && styles.packageTypeButtonActive]}
+                onPress={() => setSelectedItemType('clothes')}
+              >
+                <MaterialCommunityIcons name="hanger" size={24} color={selectedItemType === 'clothes' ? '#FFFFFF' : '#4B5563'} />
+                <Text style={[styles.packageTypeText, selectedItemType === 'clothes' && styles.packageTypeTextActive]}>Clothes</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.packageTypeButton}>
-                <MaterialCommunityIcons name="dots-horizontal" size={24} color="#4B5563" />
-                <Text style={styles.packageTypeText}>Other</Text>
+              <TouchableOpacity
+                style={[styles.packageTypeButton, selectedItemType === 'other' && styles.packageTypeButtonActive]}
+                onPress={() => setSelectedItemType('other')}
+              >
+                <MaterialCommunityIcons name="dots-horizontal" size={24} color={selectedItemType === 'other' ? '#FFFFFF' : '#4B5563'} />
+                <Text style={[styles.packageTypeText, selectedItemType === 'other' && styles.packageTypeTextActive]}>Other</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Package Weight</Text>
-            <View style={styles.weightSelector}>
-              <Text style={styles.weightText}>Up to 5 kg</Text>
-              <Ionicons name="chevron-down" size={20} color="#4B5563" />
-            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.packageTypeScrollView}>
+              {[1, 5, 10, 20].map((weight) => (
+                <TouchableOpacity
+                  key={weight}
+                  style={[
+                    styles.weightButton,
+                    selectedWeightKg === weight && styles.weightButtonActive,
+                  ]}
+                  onPress={() => setSelectedWeightKg(weight)}
+                >
+                  <Text
+                    style={[
+                      styles.weightButtonText,
+                      selectedWeightKg === weight && styles.weightButtonTextActive,
+                    ]}
+                  >
+                    Up to {weight} kg
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Distance (km)</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter distance in km"
+              keyboardType="numeric"
+              value={distanceKm.toString()}
+              onChangeText={(text) => setDistanceKm(parseFloat(text))}
+            />
+            {distanceError ? <Text style={styles.errorText}>{distanceError}</Text> : null}
           </View>
         </View>
       </ScrollView>
-
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.sendButton}>
+        <TouchableOpacity style={styles.sendButton} onPress={handleGetEstimate}>
           <Text style={styles.sendButtonText}>Get Estimate</Text>
         </TouchableOpacity>
+        {estimatedPrice !== null && (
+          <Text style={styles.estimatedPriceText}>Estimated Price: ₹{estimatedPrice}</Text>
+        )}
       </View>
     </View>
   );
@@ -239,6 +306,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
   },
+  weightButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  weightButtonActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  weightButtonText: {
+    fontSize: 14,
+    color: '#4B5563',
+  },
+  weightButtonTextActive: {
+    color: '#FFFFFF',
+  },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -259,6 +346,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  estimatedPriceText: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#1F2937',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 5,
+    fontSize: 14,
   },
   modalContainer: {
     flex: 1,
@@ -292,6 +392,16 @@ const styles = StyleSheet.create({
   cityText: {
     fontSize: 18,
   },
+  textInput: {
+    height: 40,
+    borderColor: '#D1D5DB',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#FFFFFF',
+    fontSize: 16,
+    color: '#1F2937',
+  },
 });
 
-export default RapidoParcelHomeScreen;
+export default AddShipmentScreen;
