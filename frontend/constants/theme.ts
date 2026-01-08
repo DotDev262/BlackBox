@@ -5,25 +5,48 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#212121', // Dark Gray
+    background: '#F5F5F5', // Light Gray
+    tint: '#2196F3', // Blue
+    icon: '#757575', // Medium Gray
+    tabIconDefault: '#757575',
+    tabIconSelected: '#2196F3',
+    cardBackground: '#FFFFFF', // White
+    borderColor: '#E0E0E0', // Lighter Gray
+    // Status colors
+    accentColor: '#2196F3', // Blue
+    ratingText: '#FFA000', // Amber
+    ratingBackground: 'rgba(255, 160, 0, 0.1)',
+    transitStatusText: '#2196F3', // Blue
+    transitStatusBackground: 'rgba(33, 150, 243, 0.1)',
+    // New status colors for better harmony
+    statusWarningText: '#FFA000', // Amber
+    statusWarningBackground: 'rgba(255, 160, 0, 0.1)',
+    statusInfoText: '#757575', // Medium Gray
+    statusInfoBackground: '#F5F5F5',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#E0E0E0', // Light Gray
+    background: '#121212', // Very Dark Gray
+    tint: '#2196F3', // Blue
+    icon: '#9E9E9E', // Medium Gray
+    tabIconDefault: '#9E9E9E',
+    tabIconSelected: '#2196F3',
+    cardBackground: '#1E1E1E', // Dark Gray
+    borderColor: '#424242', // Lighter Dark Gray
+    // Status colors
+    accentColor: '#2196F3', // Blue
+    ratingText: '#FFC107', // Amber
+    ratingBackground: 'rgba(255, 193, 7, 0.1)',
+    transitStatusText: '#64B5F6', // Light Blue
+    transitStatusBackground: 'rgba(100, 181, 246, 0.1)',
+    // New status colors for better harmony
+    statusWarningText: '#FFC107', // Amber
+    statusWarningBackground: 'rgba(255, 193, 7, 0.1)',
+    statusInfoText: '#9E9E9E', // Medium Gray
+    statusInfoBackground: '#424242',
   },
 };
 
