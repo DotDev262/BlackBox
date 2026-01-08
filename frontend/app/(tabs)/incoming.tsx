@@ -48,29 +48,28 @@ const IncomingShipmentsScreen = () => {
               <View>
                 <View style={styles.userNameRating}>
                   <ThemedText style={styles.userName}>John D.</ThemedText>
-                  <View style={styles.userRating}>
-                    <MaterialIcons name="star" size={10} color="#F59E0B" />
-                    <ThemedText style={styles.ratingText}>4.9</ThemedText>
-                  </View>
                 </View>
                 <ThemedText style={[styles.packageDetails, { color: themeColors.icon }]}>Electronics • 2.5 kg</ThemedText>
               </View>
             </View>
             <View style={styles.cardStatusContainer}>
               <View style={[styles.cardStatus, { backgroundColor: themeColors.tint + '20' }]}> 
-                <MaterialIcons name="inventory_2" size={14} color={themeColors.tint} /> 
+                {/* Fixed Icon Name: inventory_2 -> inventory */}
+                <MaterialIcons name="inventory" size={14} color={themeColors.tint} /> 
                 <ThemedText style={[styles.statusText, { color: themeColors.tint }]}>Ready</ThemedText>
               </View>
             </View>
           </View>
 
           <View style={[styles.locationInfo, { backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}>
-            <MaterialIcons name="location_on" size={18} color={themeColors.tint} />
+            {/* Fixed Icon Name: location_on -> location-on */}
+            <MaterialIcons name="location-on" size={18} color={themeColors.tint} />
             <ThemedText style={styles.locationText}>Central Station Locker A</ThemedText>
           </View>
 
           <TouchableOpacity style={[styles.actionButton, { backgroundColor: themeColors.tint }]}>
-            <MaterialIcons name="qr_code_scanner" size={24} color="#FFFFFF" />
+            {/* Fixed Icon Name: qr_code_scanner -> qr-code-scanner */}
+            <MaterialIcons name="qr-code-scanner" size={24} color="#FFFFFF" />
             <Text style={styles.actionButtonText}>I have reached the center</Text>
           </TouchableOpacity>
         </View>
@@ -82,22 +81,20 @@ const IncomingShipmentsScreen = () => {
           <View style={styles.cardHeader}>
             <View style={styles.cardUserDetails}>
               <View style={[styles.userAvatar, { backgroundColor: themeColors.background }]}>
-                <MaterialIcons name="face_3" size={24} color={themeColors.icon} />
+                {/* Fixed Icon Name: face_3 -> face */}
+                <MaterialIcons name="face" size={24} color={themeColors.icon} />
               </View>
               <View>
                 <View style={styles.userNameRating}>
                   <ThemedText style={styles.userName}>Sarah L.</ThemedText>
-                  <View style={[styles.userRatingAlt, { backgroundColor: themeColors.background }]}>
-                    <MaterialIcons name="star" size={10} color={themeColors.icon} />
-                    <ThemedText style={[styles.ratingText, { color: themeColors.icon }]}>4.5</ThemedText>
-                  </View>
                 </View>
                 <ThemedText style={[styles.packageDetails, { color: themeColors.icon }]}>Documents • 0.5 kg</ThemedText>
               </View>
             </View>
             <View style={styles.cardStatusContainer}>
               <View style={[styles.cardStatusTransit, { backgroundColor: '#3B82F620' }]}>
-                <MaterialIcons name="local_shipping" size={14} color="#3B82F6" />
+                {/* Fixed Icon Name: local_shipping -> local-shipping */}
+                <MaterialIcons name="local-shipping" size={14} color="#3B82F6" />
                 <ThemedText style={[styles.statusText, { color: '#3B82F6' }]}>In Transit</ThemedText>
               </View>
             </View>
@@ -116,7 +113,8 @@ const IncomingShipmentsScreen = () => {
 
           <TouchableOpacity style={[styles.trackButton, { backgroundColor: themeColors.background, borderColor: themeColors.borderColor }]}>
             <ThemedText style={styles.trackButtonText}>Track Location</ThemedText>
-            <MaterialIcons name="arrow_forward" size={18} color={themeColors.text} />
+            {/* Fixed Icon Name: arrow_forward -> arrow-forward */}
+            <MaterialIcons name="arrow-forward" size={18} color={themeColors.text} />
           </TouchableOpacity>
         </View>
 
