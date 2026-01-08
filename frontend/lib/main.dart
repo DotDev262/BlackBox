@@ -8,24 +8,30 @@ void main() {
 
 class City {
   final String name;
-  final double lat;
-  final double lng;
+  // final double lat;
+  // final double lng;
 
-  const City({required this.name, required this.lat, required this.lng});
+  // const City({required this.name, required this.lat, required this.lng});
+  const City({required this.name});
 }
 
 // --- UPDATED LIST: Top 10 Cities in India ---
+// const List<City> cities = [
+//   City(name: 'Mumbai, Maharashtra', lat: 19.0760, lng: 72.8777),
+//   City(name: 'Delhi, Delhi', lat: 28.6139, lng: 77.2090),
+//   City(name: 'Bangalore, Karnataka', lat: 12.9716, lng: 77.5946),
+//   City(name: 'Hyderabad, Telangana', lat: 17.3850, lng: 78.4867),
+//   City(name: 'Ahmedabad, Gujarat', lat: 23.0225, lng: 72.5714),
+//   City(name: 'Chennai, Tamil Nadu', lat: 13.0827, lng: 80.2707),
+//   City(name: 'Kolkata, West Bengal', lat: 22.5726, lng: 88.3639),
+//   City(name: 'Surat, Gujarat', lat: 21.1702, lng: 72.8311),
+//   City(name: 'Pune, Maharashtra', lat: 18.5204, lng: 73.8567),
+//   City(name: 'Jaipur, Rajasthan', lat: 26.9124, lng: 75.7873),
+// ];
+
 const List<City> cities = [
-  City(name: 'Mumbai, Maharashtra', lat: 19.0760, lng: 72.8777),
-  City(name: 'Delhi, Delhi', lat: 28.6139, lng: 77.2090),
-  City(name: 'Bangalore, Karnataka', lat: 12.9716, lng: 77.5946),
-  City(name: 'Hyderabad, Telangana', lat: 17.3850, lng: 78.4867),
-  City(name: 'Ahmedabad, Gujarat', lat: 23.0225, lng: 72.5714),
-  City(name: 'Chennai, Tamil Nadu', lat: 13.0827, lng: 80.2707),
-  City(name: 'Kolkata, West Bengal', lat: 22.5726, lng: 88.3639),
-  City(name: 'Surat, Gujarat', lat: 21.1702, lng: 72.8311),
-  City(name: 'Pune, Maharashtra', lat: 18.5204, lng: 73.8567),
-  City(name: 'Jaipur, Rajasthan', lat: 26.9124, lng: 75.7873),
+  City(name: 'Mumbai'),
+  City(name: 'Delhi')
 ];
 
 class MyApp extends StatelessWidget {
@@ -55,7 +61,7 @@ class _RouteFormScreenState extends State<RouteFormScreen> {
   String _apiResponse = "";
 
   // REMEMBER: Use your PC/Server's IP address (e.g., 192.168.1.X)
-  final String _serverUrl = 'http://YOUR_SERVER_IP:8000/process-route';
+  final String _serverUrl = 'http://localhost:8000/route';
 
   Future<void> _submitData() async {
     if (_selectedSource == null || _selectedDestination == null) {
@@ -78,23 +84,8 @@ class _RouteFormScreenState extends State<RouteFormScreen> {
     });
 
     try {
-      final Map<String, dynamic> data = {
-        "source": {
-          "name": _selectedSource!.name,
-          "lat": _selectedSource!.lat,
-          "lng": _selectedSource!.lng
-        },
-        "destination": {
-          "name": _selectedDestination!.name,
-          "lat": _selectedDestination!.lat,
-          "lng": _selectedDestination!.lng
-        }
-      };
-
-      final response = await http.post(
-        Uri.parse(_serverUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(data),
+      final response = await http.get(
+        Uri.parse('$_serverUrl?source=${_selectedSource!.name}&destination=${_selectedDestination!.name}'),
       );
 
       if (response.statusCode == 200) {
