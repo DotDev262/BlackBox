@@ -24,7 +24,7 @@ const IncomingShipmentsScreen = () => {
           </View>
           <View>
             <ThemedText style={styles.headerTitle}>Incoming Shipments</ThemedText>
-            <ThemedText style={[styles.headerSubtitle, { color: themeColors.icon }]}>CarryMate Receiver</ThemedText>
+            <ThemedText style={[styles.headerSubtitle, { color: themeColors.icon }]}>TakeItAlong Receiver</ThemedText>
           </View>
         </View>
         <TouchableOpacity style={[styles.notificationsButton, { backgroundColor: themeColors.cardBackground }]}>
