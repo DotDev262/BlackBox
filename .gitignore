@@ -1,0 +1,29 @@
+# VS Code
+.vscode/settings.json
+.vscode/launch.json  # Optional: keep if sharing configs
+!.vscode/README.md   # Keep README if present
+
+# Other IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+**/frontend/.dart_tool/
+**/frontend/.flutter-plugins
+**/frontend/.flutter-plugins-dependencies
+**/frontend/.pub-cache/
+**/frontend/.pub/
+**/frontend/build/
+**/frontend/.packages
+
+# VS Code (user-specific)
+**/frontend/.vscode/settings.json
+**/frontend/.vscode/tasks.json
+# Keep shared configs
+!**/frontend/.vscode/launch.json
+!**/frontend/.vscode/README.md
+
+# Other IDEs
+**/frontend/.idea/
+**/frontend/*.iml
