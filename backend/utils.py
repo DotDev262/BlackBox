@@ -44,6 +44,21 @@ Base.metadata.create_all(bind=engine)
 # -------------------------------
 # Utilities
 # -------------------------------
+CITY_DATA = {
+    "Mumbai": {"lat": 19.0760, "lon": 72.8777},
+    "Delhi": {"lat": 28.7041, "lon": 77.1025},
+    "Bangalore": {"lat": 12.9716, "lon": 77.5946},
+    "Hyderabad": {"lat": 17.3850, "lon": 78.4867},
+    "Ahmedabad": {"lat": 23.0225, "lon": 72.5714},
+    "Chennai": {"lat": 13.0827, "lon": 80.2707},
+    "Kolkata": {"lat": 22.5726, "lon": 88.3639},
+    "Surat": {"lat": 21.1702, "lon": 72.8311},
+    "Pune": {"lat": 18.5204, "lon": 73.8567},
+    "Jaipur": {"lat": 26.9124, "lon": 75.7873},
+    "New York": {"lat": 40.7128, "lon": -74.0060},
+    "London": {"lat": 51.5074, "lon": -0.1278},
+}
+
 def get_db():
     db = SessionLocal()
     try:
@@ -127,10 +142,22 @@ def create_order(db: Session, order: OrderCreate, user):
     if not sender_profile:
         raise HTTPException(status_code=400, detail="You must create a Sender profile first")
 
-    distance_km = haversine_distance(order.source_lat, order.source_lon,
-                                     order.dest_lat, order.dest_lon)
-    price_response = price_calculator(order.source_lat, order.source_lon,
-                                      order.dest_lat, order.dest_lon,
+    # SECURITY FIX: Protect against coordinate manipulation (IDOR in Price)
+    # Use server-side city coordinates if available, otherwise fallback to user input
+    source_lat, source_lon = order.source_lat, order.source_lon
+    dest_lat, dest_lon = order.dest_lat, order.dest_lon
+
+    if order.source_city in CITY_DATA:
+        source_lat = CITY_DATA[order.source_city]["lat"]
+        source_lon = CITY_DATA[order.source_city]["lon"]
+    
+    if order.dest_city in CITY_DATA:
+        dest_lat = CITY_DATA[order.dest_city]["lat"]
+        dest_lon = CITY_DATA[order.dest_city]["lon"]
+
+    distance_km = haversine_distance(source_lat, source_lon, dest_lat, dest_lon)
+    price_response = price_calculator(source_lat, source_lon,
+                                      dest_lat, dest_lon,
                                       order.weight_kg, order.item_type)
     price = price_response.price
 
@@ -161,6 +188,14 @@ def list_orders(db: Session, user):
         (models.Order.sender_id == sender_id) | 
         (models.Order.traveller_id == traveller_id)
     ).all()
+
+def list_available_orders(db: Session, source_city: str = None, dest_city: str = None):
+    query = db.query(models.Order).filter(models.Order.status == "pending")
+    if source_city:
+        query = query.filter(models.Order.source_city == source_city)
+    if dest_city:
+        query = query.filter(models.Order.dest_city == dest_city)
+    return query.all()
 
 # -------------------------------
 # Complaint Logic
