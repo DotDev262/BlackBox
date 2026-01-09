@@ -1,8 +1,11 @@
 # Use an official Python runtime as a parent image
 FROM python:3.11-slim
 
-# Set the working directory in the container
-WORKDIR /app
+# Create a non-root user and group
+RUN addgroup --system python && adduser --system --ingroup python python
+
+# Set the working directory in the container to the user's home directory
+WORKDIR /home/python/app
 
 # Copy the requirements file into the container
 COPY requirements.txt .
@@ -12,6 +15,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY . .
+
+# Change ownership of the /home/python/app directory to the python user
+RUN chown -R python:python /home/python/app
+
+# Switch to the non-root user
+USER python
 
 # Expose the port FastAPI will run on
 EXPOSE 8000
