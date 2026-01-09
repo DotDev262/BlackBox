@@ -5,17 +5,9 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
-import Constants from "expo-constants";
+import { fetchWithAuth } from '@/lib/api';
 
 const { width } = Dimensions.get('window');
-
-// Get the IP address of the machine running 'npx expo start'
-const debuggerHost = Constants.expoConfig?.hostUri;
-const localhost = debuggerHost?.split(":")[0];
-
-const API_URL = localhost 
-  ? `http://${localhost}:8000` 
-  : "https://api.your-production-url.com";
 
 const CITIES = [
   { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
@@ -42,7 +34,6 @@ const AddShipmentScreen = () => {
   const [dropoff, setDropoff] = useState<string | null>(null);
   const [isPickupModalVisible, setPickupModalVisible] = useState(false);
   const [isDropoffModalVisible, setDropoffModalVisible] = useState(false);
-  const [isSenderModalVisible, setSenderModalVisible] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [distanceKm, setDistanceKm] = useState(10.0);
@@ -51,9 +42,6 @@ const AddShipmentScreen = () => {
   const [distanceError, setDistanceError] = useState('');
   const [selectedWeightKg, setSelectedWeightKg] = useState(5);
 
-  const [senders, setSenders] = useState<Sender[]>([]);
-  const [selectedSender, setSelectedSender] = useState<Sender | null>(null);
-  const [loadingSenders, setLoadingSenders] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const colorScheme = useColorScheme();
@@ -71,22 +59,113 @@ const AddShipmentScreen = () => {
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [dropoffCoords, setDropoffCoords] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Fetch senders on component mount
+  // Profile creation state
+  const [isProfileModalVisible, setProfileModalVisible] = useState(false);
+  const [senderName, setSenderName] = useState('');
+  const [senderPhone, setSenderPhone] = useState('');
+  const [creatingProfile, setCreatingProfile] = useState(false);
+
   useEffect(() => {
-    const fetchSenders = async () => {
-      try {
-        setLoadingSenders(true);
-        const response = await fetch(`http://${localhost}:8000/senders`);
-        const data = await response.json();
-        setSenders(data);
-      } catch (error) {
-        console.error('Error fetching senders:', error);
-      } finally {
-        setLoadingSenders(false);
-      }
-    };
-    fetchSenders();
+    checkSenderProfile();
   }, []);
+
+  const checkSenderProfile = async () => {
+    try {
+      const response = await fetchWithAuth('/senders');
+      if (response.ok) {
+        const data = await response.json();
+        // If user has no sender profile, prompt them to create one
+        if (Array.isArray(data) && data.length === 0) {
+          setProfileModalVisible(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking sender profile:', error);
+    }
+  };
+
+  const handleCreateProfile = async () => {
+    if (!senderName || !senderPhone) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setCreatingProfile(true);
+    try {
+      const response = await fetchWithAuth('/senders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: senderName, phone: senderPhone }),
+      });
+
+      if (response.ok) {
+        setProfileModalVisible(false);
+      } else {
+        const data = await response.json();
+        alert(data.detail || 'Failed to create profile');
+      }
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      alert('Error creating profile');
+    } finally {
+      setCreatingProfile(false);
+    }
+  };
+
+  const renderProfileModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isProfileModalVisible}
+      onRequestClose={() => {}} // Prevent closing without creating profile
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: themeColors.cardBackground, height: 'auto', minHeight: 300 }]}>
+          <Text style={[styles.modalTitle, { color: themeColors.text, marginBottom: 8 }]}>Complete Your Profile</Text>
+          <Text style={{ color: themeColors.icon, marginBottom: 20 }}>
+            To send packages, we need your contact details.
+          </Text>
+
+          <View style={{ gap: 16 }}>
+            <View>
+              <Text style={{ color: themeColors.text, marginBottom: 8, fontWeight: '600' }}>Full Name</Text>
+              <TextInput
+                style={[styles.inputContainer, { color: themeColors.text, borderColor: themeColors.borderColor }]}
+                placeholder="John Doe"
+                placeholderTextColor={themeColors.icon}
+                value={senderName}
+                onChangeText={setSenderName}
+              />
+            </View>
+
+            <View>
+              <Text style={{ color: themeColors.text, marginBottom: 8, fontWeight: '600' }}>Phone Number</Text>
+              <TextInput
+                style={[styles.inputContainer, { color: themeColors.text, borderColor: themeColors.borderColor }]}
+                placeholder="+91 98765 43210"
+                placeholderTextColor={themeColors.icon}
+                value={senderPhone}
+                onChangeText={setSenderPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.sendButton, { backgroundColor: PRIMARY_COLOR, justifyContent: 'center', marginTop: 10 }]}
+              onPress={handleCreateProfile}
+              disabled={creatingProfile}
+            >
+              {creatingProfile ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Text style={styles.sendButtonText}>Create Profile</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 
   const handleGetEstimate = async () => {
     setDistanceError('');
@@ -96,8 +175,8 @@ const AddShipmentScreen = () => {
       return;
     }
     try {
-      const url = `http://${localhost}:8000/calculate-price?lat1=${pickupCoords.lat}&lon1=${pickupCoords.lon}&lat2=${dropoffCoords.lat}&lon2=${dropoffCoords.lon}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`;
-      const response = await fetch(url);
+      const url = `/calculate-price?lat1=${pickupCoords.lat}&lon1=${pickupCoords.lon}&lat2=${dropoffCoords.lat}&lon2=${dropoffCoords.lon}&weight_kg=${selectedWeightKg}&item_type=${selectedItemType}`;
+      const response = await fetchWithAuth(url);
       const data = await response.json();
       setEstimatedPrice(data.price);
     } catch (error) {
@@ -107,7 +186,7 @@ const AddShipmentScreen = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedSender || !pickup || !dropoff || !pickupCoords || !dropoffCoords || estimatedPrice === null) {
+    if (!pickup || !dropoff || !pickupCoords || !dropoffCoords || estimatedPrice === null) {
       setDistanceError('Please complete all fields and get an estimate first.');
       return;
     }
@@ -115,7 +194,6 @@ const AddShipmentScreen = () => {
     setIsPlacingOrder(true);
     try {
       const orderPayload = {
-        sender_id: selectedSender.id,
         source_city: pickup,
         dest_city: dropoff,
         weight_kg: selectedWeightKg,
@@ -126,7 +204,7 @@ const AddShipmentScreen = () => {
         dest_lon: dropoffCoords.lon,
       };
 
-      const response = await fetch(`http://${localhost}:8000/orders`, {
+      const response = await fetchWithAuth(`/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),
@@ -143,7 +221,6 @@ const AddShipmentScreen = () => {
         setPickupCoords(null);
         setDropoffCoords(null);
         setEstimatedPrice(null);
-        setSelectedSender(null);
         setSelectedItemType('documents');
         setSelectedWeightKg(5);
       } else {
@@ -156,52 +233,6 @@ const AddShipmentScreen = () => {
       setIsPlacingOrder(false);
     }
   };
-
-  const renderSenderModal = () => (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={isSenderModalVisible}
-      onRequestClose={() => setSenderModalVisible(false)}
-    >
-      <Pressable style={styles.modalOverlay} onPress={() => setSenderModalVisible(false)}>
-        <View style={[styles.modalContent, { backgroundColor: themeColors.cardBackground }]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>Select Sender</Text>
-            <TouchableOpacity onPress={() => setSenderModalVisible(false)}>
-              <Ionicons name="close" size={24} color={themeColors.icon} />
-            </TouchableOpacity>
-          </View>
-
-          {loadingSenders ? (
-            <ActivityIndicator size="large" color="#059669" />
-          ) : (
-            <FlatList
-              data={senders}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[styles.cityItem, { borderBottomColor: themeColors.borderColor }]}
-                  onPress={() => {
-                    setSelectedSender(item);
-                    setSenderModalVisible(false);
-                  }}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.senderName, { color: themeColors.text }]}>{item.name}</Text>
-                    <Text style={styles.senderEmail}>{item.email || item.phone || 'No contact'}</Text>
-                  </View>
-                  {selectedSender?.id === item.id && (
-                    <Ionicons name="checkmark-circle" size={20} color="#059669" />
-                  )}
-                </TouchableOpacity>
-              )}
-            />
-          )}
-        </View>
-      </Pressable>
-    </Modal>
-  );
 
   const renderCityModal = (
     visible: boolean,
@@ -258,7 +289,7 @@ const AddShipmentScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
-      {renderSenderModal()}
+      {renderProfileModal()}
       {renderCityModal(isPickupModalVisible, setPickupModalVisible, (city) => { setPickup(city.name); setPickupCoords({ lat: city.lat, lon: city.lon }); })}
       {renderCityModal(isDropoffModalVisible, setDropoffModalVisible, (city) => { setDropoff(city.name); setDropoffCoords({ lat: city.lat, lon: city.lon }); })}
       <ScrollView
@@ -272,25 +303,6 @@ const AddShipmentScreen = () => {
             <Text style={[styles.screenTitle, { color: themeColors.text }]}>New Shipment</Text>
             <Text style={styles.screenSubtitle}>Fill details to get an estimate</Text>
           </View>
-
-          {/* Sender Selection Card */}
-          <TouchableOpacity
-            onPress={() => setSenderModalVisible(true)}
-            style={[styles.card, { backgroundColor: themeColors.cardBackground }]}
-          >
-            <View style={styles.locationRow}>
-              <View style={[styles.iconContainer, { backgroundColor: '#E0E7FF' }]}>
-                <Ionicons name="person" size={20} color="#4F46E5" />
-              </View>
-              <View style={styles.locationTextContainer}>
-                <Text style={styles.labelSmall}>Sender</Text>
-                <Text style={[styles.locationValue, { color: selectedSender ? themeColors.text : '#9CA3AF' }]}>
-                  {selectedSender ? selectedSender.name : 'Select Sender'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </View>
-          </TouchableOpacity>
 
           {/* Location Card with Shadow */}
           <View style={[styles.card, { backgroundColor: themeColors.cardBackground }]}>

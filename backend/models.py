@@ -6,6 +6,7 @@ from database import Base  # <- import Base from your database.py
 class Sender(Base):
     __tablename__ = "senders"
     id = Column(Integer, primary_key=True, index=True)
+    supabase_id = Column(String, unique=True, nullable=True, index=True)
     name = Column(String, nullable=False)
     email = Column(String)
     phone = Column(String)
@@ -15,6 +16,7 @@ class Sender(Base):
 class Traveller(Base):
     __tablename__ = "travellers"
     id = Column(Integer, primary_key=True, index=True)
+    supabase_id = Column(String, unique=True, nullable=True, index=True)
     name = Column(String, nullable=False)
     email = Column(String)
     phone = Column(String)
@@ -38,3 +40,12 @@ class Order(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     sender = relationship("Sender", back_populates="orders")
     traveller = relationship("Traveller", back_populates="orders")
+    complaints = relationship("Complaint", back_populates="order")
+
+class Complaint(Base):
+    __tablename__ = "complaints"
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    issue = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    order = relationship("Order", back_populates="complaints")

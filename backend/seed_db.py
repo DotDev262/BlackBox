@@ -1,7 +1,8 @@
 """
 Seed database with demo data
 """
-from utils import SessionLocal, Sender, Traveller, Order, engine, Base
+from models import Sender, Traveller, Order
+from database import SessionLocal, engine, Base
 from datetime import datetime
 import random
 
