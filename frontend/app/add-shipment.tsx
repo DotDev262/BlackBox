@@ -48,7 +48,7 @@ const AddShipmentScreen = () => {
   const themeColors = Colors[colorScheme ?? 'light'];
 
   // Define a consistent Primary Color (Emerald Green for Logistics vibe)
-  const PRIMARY_COLOR = '#059669'; 
+  const PRIMARY_COLOR = '#0000cd'; 
   const PRIMARY_LIGHT = '#D1FAE5';
 
   const filteredCities = useMemo(
