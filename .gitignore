@@ -27,7 +27,8 @@
 # Other IDEs
 **/frontend/.idea/
 **/frontend/*.iml
-
+**/backend/.env
+**/frontend/.env
 # Backend
 **/backend/venv
 **/backend/__pycache__
