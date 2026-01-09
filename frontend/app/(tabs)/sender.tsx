@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, TouchableOpacity, FlatList, Platform, ActivityIndicator, RefreshControl, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,37 +8,66 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import ShipmentCard, { type Shipment } from '@/components/shipment-card';
-
-const dummyShipments: Shipment[] = [
-  {
-    id: '1',
-    parcelId: 'BBX001',
-    location: 'Mumbai, MH',
-    status: 'In Transit',
-    estimatedTime: '2 hours',
-    icon: 'local-shipping',
-  },
-  {
-    id: '2',
-    parcelId: 'BBX002',
-    location: 'Delhi, DL',
-    status: 'Finding Traveller',
-    estimatedTime: '5 hours',
-    icon: 'person-search',
-  },
-  {
-    id: '3',
-    parcelId: 'BBX003',
-    location: 'Bangalore, KA',
-    status: 'Pending Drop Off',
-    estimatedTime: '1 day',
-    icon: 'pending',
-  },
-];
+import { fetchWithAuth } from '@/lib/api';
 
 const SenderScreen = () => {
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const [orders, setOrders] = useState<Shipment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      // 1. Fetch current user's sender profile to get sender_id
+      const senderRes = await fetchWithAuth('/senders');
+      const senders = await senderRes.json();
+      
+      if (!Array.isArray(senders) || senders.length === 0) {
+        setOrders([]);
+        return;
+      }
+      const mySenderId = senders[0].id;
+
+      // 2. Fetch all orders involved with this user
+      const ordersRes = await fetchWithAuth('/orders');
+      const allOrders = await ordersRes.json();
+
+      // 3. Filter and map
+      const myOrders = allOrders
+        .filter((o: any) => o.sender_id === mySenderId)
+        .map((o: any) => {
+          let status: Shipment['status'] = 'Finding Traveller';
+          if (o.status === 'accepted') status = 'In Transit';
+          // You can map other statuses if needed
+
+          return {
+            id: o.id.toString(),
+            parcelId: `BBX${o.id.toString().padStart(3, '0')}`,
+            location: `${o.source_city} -> ${o.dest_city}`,
+            status: status,
+            estimatedTime: `${Math.ceil(o.distance_km / 60)} hours`, // Rough estimate
+            icon: o.item_type === 'documents' ? 'description' : 'local-shipping',
+          };
+        });
+
+      setOrders(myOrders.reverse()); // Show newest first
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
+  };
 
   const handleFabPress = () => {
     router.push('/add-shipment');
@@ -54,13 +83,33 @@ const SenderScreen = () => {
       <ThemedView style={[styles.header, { borderBottomColor: borderColor }]}>
         <ThemedText style={[styles.headerTitle, { color: textColor }]}>Your Shipments</ThemedText>
       </ThemedView>
-      <FlatList
-        data={dummyShipments}
-        renderItem={({ item }) => <ShipmentCard shipment={item} />}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={<ThemedText style={[styles.listHeader, { color: textColor }]}>Active Shipments</ThemedText>}
-      />
+      
+      {loading && !refreshing ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={fabBackgroundColor} />
+        </View>
+      ) : (
+        <FlatList
+          data={orders}
+          renderItem={({ item }) => <ShipmentCard shipment={item} />}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          ListHeaderComponent={
+            orders.length > 0 ? (
+              <ThemedText style={[styles.listHeader, { color: textColor }]}>Active Shipments</ThemedText>
+            ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <MaterialIcons name="inventory-2" size={64} color="#ccc" />
+              <ThemedText style={{ color: '#888', marginTop: 16 }}>No active shipments found.</ThemedText>
+              <ThemedText style={{ color: '#888' }}>Tap + to create one.</ThemedText>
+            </View>
+          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        />
+      )}
+
       <TouchableOpacity style={[styles.fab, { backgroundColor: fabBackgroundColor }]} onPress={handleFabPress}>
         <MaterialIcons name="add" size={24} color="#FFFFFF" />
         <ThemedText style={styles.fabText}>Send New</ThemedText>
@@ -80,6 +129,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 20,
+    paddingBottom: 100,
   },
   listHeader: {
     fontSize: 20,
@@ -113,6 +163,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 60,
   },
 });
 

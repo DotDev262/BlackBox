@@ -76,6 +76,11 @@ def list_travellers(db: Session = Depends(utils.get_db), user = Depends(get_curr
 # -------------------------------
 # Order endpoints
 # -------------------------------
+@app.get("/orders/available")
+def list_available_orders(source_city: str = None, dest_city: str = None, db: Session = Depends(utils.get_db)):
+    print(f"DEBUG: Listing available orders. Filters: src={source_city}, dest={dest_city}")
+    return utils.list_available_orders(db, source_city, dest_city)
+
 @app.post("/orders")
 def create_order(order: utils.OrderCreate, db: Session = Depends(utils.get_db), user = Depends(get_current_user)):
     return utils.create_order(db, order, user)
@@ -83,7 +88,6 @@ def create_order(order: utils.OrderCreate, db: Session = Depends(utils.get_db), 
 @app.get("/orders")
 def list_orders(db: Session = Depends(utils.get_db), user = Depends(get_current_user)):
     return utils.list_orders(db, user)
-
 
 @app.post("/orders/{order_id}/accept")
 def traveller_accept_order(order_id: int, db: Session = Depends(utils.get_db), user = Depends(get_current_user)):
